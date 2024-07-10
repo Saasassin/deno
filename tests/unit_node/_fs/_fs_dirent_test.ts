@@ -1,81 +1,66 @@
 // Copyright 2018-2024 the Deno authors. All rights reserved. MIT license.
 import { assert, assertEquals, assertThrows } from "@std/assert/mod.ts";
-import { Dirent as Dirent_ } from "node:fs";
-
-// deno-lint-ignore no-explicit-any
-const Dirent = Dirent_ as any;
-
-class DirEntryMock implements Deno.DirEntry {
-  parentPath = "";
-  name = "";
-  isFile = false;
-  isDirectory = false;
-  isSymlink = false;
-}
+import { Dirent } from "node:fs";
+import { NodeDirentType } from "ext:deno_node/_fs/_fs_dirent.ts";
 
 Deno.test({
   name: "Directories are correctly identified",
   fn() {
-    const entry: DirEntryMock = new DirEntryMock();
-    entry.isDirectory = true;
-    entry.isFile = false;
-    entry.isSymlink = false;
-    assert(new Dirent(entry).isDirectory());
-    assert(!new Dirent(entry).isFile());
-    assert(!new Dirent(entry).isSymbolicLink());
+    const entry = new Dirent("foo", "parent", NodeDirentType.Directory);
+    assert(entry.isDirectory());
+    assert(!entry.isFile());
+    assert(!entry.isSymbolicLink());
   },
 });
 
 Deno.test({
   name: "Files are correctly identified",
   fn() {
-    const entry: DirEntryMock = new DirEntryMock();
-    entry.isDirectory = false;
-    entry.isFile = true;
-    entry.isSymlink = false;
-    assert(!new Dirent(entry).isDirectory());
-    assert(new Dirent(entry).isFile());
-    assert(!new Dirent(entry).isSymbolicLink());
+    const entry = new Dirent("foo", "parent", NodeDirentType.File);
+    assert(!entry.isDirectory());
+    assert(entry.isFile());
+    assert(!entry.isSymbolicLink());
   },
 });
 
 Deno.test({
   name: "Symlinks are correctly identified",
   fn() {
-    const entry: DirEntryMock = new DirEntryMock();
-    entry.isDirectory = false;
-    entry.isFile = false;
-    entry.isSymlink = true;
-    assert(!new Dirent(entry).isDirectory());
-    assert(!new Dirent(entry).isFile());
-    assert(new Dirent(entry).isSymbolicLink());
+    const entry = new Dirent("foo", "parent", NodeDirentType.Symlink);
+    assert(!entry.isDirectory());
+    assert(!entry.isFile());
+    assert(entry.isSymbolicLink());
   },
 });
 
 Deno.test({
   name: "File name is correct",
   fn() {
-    const entry: DirEntryMock = new DirEntryMock();
-    entry.name = "my_file";
-    assertEquals(new Dirent(entry).name, "my_file");
+    const entry = new Dirent("my_file", "parent", NodeDirentType.Symlink);
+    assertEquals(entry.name, "my_file");
+  },
+});
+
+Deno.test({
+  name: ".parentPath and .path are correct",
+  fn() {
+    const entry = new Dirent("my_file", "parent", NodeDirentType.Symlink);
+    assertEquals(entry.parentPath, "parent");
+    assertEquals(entry.path, "parent");
   },
 });
 
 Deno.test({
   name: "Socket and FIFO pipes aren't yet available",
   fn() {
-    const entry: DirEntryMock = new DirEntryMock();
+    const entry = new Dirent("my_file", "parent", NodeDirentType.File);
     assertThrows(
-      () => {
-        new Dirent(entry).isFIFO();
-      },
+      () => entry.isFIFO(),
       Error,
       "does not yet support",
     );
     assertThrows(
-      () => {
-        new Dirent(entry).isSocket();
-      },
+      () => entry.isSocket(),
       Error,
       "does not yet support",
     );
@@ -85,11 +70,9 @@ Deno.test({
 Deno.test({
   name: "Path and parent path is correct",
   fn() {
-    const entry: DirEntryMock = new DirEntryMock();
-    entry.name = "my_file";
-    entry.parentPath = "/home/user";
-    assertEquals(new Dirent(entry).name, "my_file");
-    assertEquals(new Dirent(entry).path, "/home/user");
-    assertEquals(new Dirent(entry).parentPath, "/home/user");
+    const entry = new Dirent("my_file", "/home/user", NodeDirentType.Symlink);
+    assertEquals(entry.name, "my_file");
+    assertEquals(entry.path, "/home/user");
+    assertEquals(entry.parentPath, "/home/user");
   },
 });

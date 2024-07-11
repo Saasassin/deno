@@ -4,15 +4,20 @@
 name = "deno"
 version = "1.45.0"
 authors.workspace = true
-default-run = "deno"
+default-run = "deno-bin"
 edition.workspace = true
 exclude = ["bench/testdata/lsp_benchdata/"]
 license.workspace = true
 repository.workspace = true
 description = "Provides the deno executable"
 
-[[bin]]
+# Define library
+[lib]
 name = "deno"
+path = "lib.rs"
+
+[[bin]]
+name = "deno-bin"
 path = "main.rs"
 doc = false
 

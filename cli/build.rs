@@ -18,6 +18,9 @@ mod ts {
   use std::io::Write;
   use std::path::Path;
   use std::path::PathBuf;
+  use std::sync::OnceLock;
+
+  static MANIFEST_DIR: OnceLock<String> = OnceLock::new();
 
   #[derive(Debug, Serialize)]
   #[serde(rename_all = "camelCase")]
@@ -275,7 +278,8 @@ mod ts {
 
     let output = create_snapshot(
       CreateSnapshotOptions {
-        cargo_manifest_dir: env!("CARGO_MANIFEST_DIR"),
+        cargo_manifest_dir: &MANIFEST_DIR
+          .get_or_init(|| env::var("CARGO_MANIFEST_DIR").unwrap()),
         startup_snapshot: None,
         extensions: vec![deno_tsc::init_ops_and_esm(
           op_crate_libs,
@@ -488,7 +492,9 @@ fn main() {
 }
 
 fn deno_webgpu_get_declaration() -> PathBuf {
-  let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+  // let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+  let manifest_dir =
+    PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
   manifest_dir
     .join("tsc")
     .join("dts")
